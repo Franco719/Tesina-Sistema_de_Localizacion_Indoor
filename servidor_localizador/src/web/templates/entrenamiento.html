@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Recolección de Dataset - Proyecto Indoor</title>
+
+    <!-- Tailwind CSS vía CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+
+        <h1 class="text-2xl font-bold text-gray-800 text-center mb-2">
+            📡 Panel de Entrenamiento
+        </h1>
+
+        <p class="text-sm text-gray-500 text-center mb-6">
+            Recolección de huellas Wi-Fi (Fingerprinting)
+        </p>
+
+
+        {% if not sala_activa %}
+
+            <!-- ========================= -->
+            <!-- ESTADO: DETENIDO -->
+            <!-- ========================= -->
+
+            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-6 text-center">
+
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 mb-2">
+                    🔴 Grabación detenida
+                </span>
+
+                <p class="text-xs text-gray-600">
+                    El sistema procesa los datos en tiempo real,
+                    pero no los almacena en el histórico.
+                </p>
+
+            </div>
+
+
+            <form
+                action="/modulo_entrenamiento/entrenamiento"
+                method="POST"
+                class="space-y-4">
+
+                <div>
+
+                    <label
+                        for="nombre_sala"
+                        class="block text-sm font-medium text-gray-700 mb-1">
+
+                        Nombre de la Sala / Aula
+
+                    </label>
+
+                    <input
+                        id="nombre_sala"
+                        type="text"
+                        name="nombre_sala"
+                        required
+                        placeholder="Ej: Laboratorio 3, Aula 102"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg
+                               focus:ring-2 focus:ring-blue-500 focus:outline-none">
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700
+                           text-white font-semibold py-2.5 rounded-lg
+                           transition duration-200">
+
+                    📡 Tomar muestras
+
+                </button>
+
+            </form>
+
+
+        {% else %}
+
+            <!-- ========================= -->
+            <!-- ESTADO: GRABANDO -->
+            <!-- ========================= -->
+
+            <div class="bg-blue-50 border border-blue-200 p-5 rounded-lg mb-6 text-center">
+
+                <span class="inline-flex items-center px-3 py-1 rounded-full
+                             text-sm font-medium bg-green-100 text-green-800 mb-2">
+
+                    🟢 Grabando activamente
+
+                </span>
+
+
+                <p class="text-sm text-gray-700 font-semibold mt-1">
+
+                    Sala actual:
+
+                    <span class="text-blue-700 text-lg block font-bold">
+                        {{ sala_activa }}
+                    </span>
+
+                </p>
+
+
+                <p class="text-xs text-gray-500 mt-2">
+
+                    Cada paquete enviado por el ESP32
+                    será registrado bajo esta etiqueta.
+
+                </p>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- ÚLTIMAS MUESTRAS -->
+            <!-- ========================= -->
+
+            <div class="border border-gray-200 rounded-lg overflow-hidden mb-6">
+
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+
+                    <h2 class="text-sm font-semibold text-gray-700">
+                        Últimas mediciones
+                    </h2>
+
+                </div>
+
+
+                <table class="w-full text-sm">
+
+                    <thead class="bg-gray-50">
+
+                        <tr>
+
+                            <th class="text-left p-2 pl-4 text-gray-600">
+                                Red
+                            </th>
+
+                            <th class="text-right p-2 pr-4 text-gray-600">
+                                RSSI
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="tabla-redes">
+
+                        <tr>
+
+                            <td
+                                colspan="2"
+                                class="p-4 text-center text-gray-400">
+
+                                Esperando datos del ESP32...
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- DETENER -->
+            <!-- ========================= -->
+
+            <form
+                action="/modulo_entrenamiento/pre-entrenamiento"
+                method="GET">
+
+                <button
+                    type="submit"
+                    class="w-full bg-red-600 hover:bg-red-700
+                           text-white font-semibold py-2.5 rounded-lg
+                           transition duration-200">
+
+                    🛑 Detener toma de muestras
+
+                </button>
+
+            </form>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if sala_activa %}
+
+    <script>
+
+        function traerSenalesDesdeLaAPI() {
+
+            fetch('/modulo_entrenamiento/entrenamiento/redes_vivas')
+
+                .then(response => response.json())
+
+                .then(data => {
+
+                    // La sesión de entrenamiento expiró
+                    if (!data.activo) {
+
+                        mostrarEntrenamientoFinalizado();
+
+                        return;
+                    }
+
+
+                    const tabla =
+                        document.getElementById('tabla-redes');
+
+
+                    if (!tabla) {
+                        return;
+                    }
+
+
+                    tabla.innerHTML = '';
+
+
+                    data.muestras.forEach(red => {
+
+                        const colorRssi =
+                            red.rssi > -70
+                                ? 'text-green-600 font-semibold'
+                                : 'text-orange-500';
+
+
+                        tabla.innerHTML += `
+                            <tr class="border-t border-gray-200">
+
+                                <td class="p-2 pl-4 font-mono text-xs text-gray-700">
+                                    ${red.ssid}
+                                </td>
+
+                                <td class="p-2 pr-4 text-right ${colorRssi}">
+                                    ${red.rssi} dBm
+                                </td>
+
+                            </tr>
+                        `;
+                    });
+
+                })
+
+                .catch(err => {
+
+                    console.error(
+                        "Error al consultar el estado:",
+                        err
+                    );
+
+                });
+        }
+
+
+        // Actualizar cada 3 segundos
+        setInterval(
+            traerSenalesDesdeLaAPI,
+            3000
+        );
+
+
+        // Primera ejecución
+        traerSenalesDesdeLaAPI();
+
+        function mostrarEntrenamientoFinalizado() {
+
+            document.body.innerHTML = `
+
+                <div class="min-h-screen flex items-center justify-center bg-gray-100">
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+
+                        <div class="text-5xl mb-4">
+                            ⏱️
+                        </div>
+
+                        <h1 class="text-2xl font-bold text-gray-800 mb-3">
+                            Entrenamiento finalizado
+                        </h1>
+
+                        <p class="text-gray-600 mb-6">
+                            La sesión de toma de muestras expiró
+                            automáticamente.
+                        </p>
+
+                        <a
+                            href="/modulo_entrenamiento/pre-entrenamiento"
+                            class="inline-block w-full bg-blue-600 hover:bg-blue-700
+                                text-white font-semibold py-2.5 rounded-lg">
+
+                            Iniciar nuevo entrenamiento
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+    </script>
+
+    {% endif %}
+
+    <script>
+        window.addEventListener("beforeunload", function () {
+            navigator.sendBeacon(
+                "/modulo_entrenamiento/entrenamiento/salir"
+            );
+        });
+    </script>
+
+
+
+</body>
+</html>
