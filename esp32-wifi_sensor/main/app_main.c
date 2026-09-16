@@ -17,7 +17,7 @@
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 
-// Tu manejador de eventos (Event Handler) ahora va a activar este BIT
+// Manejador de eventos (Event Handler) ahora va a activar este BIT
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) 
 {
     // Cargo variables de entorno
@@ -74,15 +74,13 @@ void app_main(void)
         memset(wifi_record, 0, sizeof(wifi_record));
 
         // PASO A: Escanear el aire (Guarda los dBm de las redes vecinas)
-        // Nota: Asegurate de quitar las funciones esp_wifi_init/start de ADENTRO de wifi_scan,
-        // ya que ahora lo inicializamos una sola vez arriba en el main.
         wifi_scan(wifi_record); 
 
         // PASO B: Conectarse a la red objetivo para poder transmitir
         connect_wifi(wifi_record);
 
         // PASO C: Sincronización en C. El programa se frena acá de forma segura 
-        // esperando hasta 5 segundos a que el router nos de IP.
+        // esperando hasta 5 segundos a que el router de IP.
         EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
                                               WIFI_CONNECTED_BIT,
                                               pdTRUE, // Limpiar el bit al salir

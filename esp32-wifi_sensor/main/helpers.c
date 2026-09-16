@@ -59,7 +59,7 @@ void send_data_to_server(wifi_ap_record_t *records, int cantidad)
     // Encabezado para asegurar la validacion con el servidor
     esp_http_client_set_header(client, "API-Key", API_SECRET_KEY);
     
-    // Encabezado obligado para enviar JSON
+    // Encabezado para enviar JSON
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
 
@@ -69,7 +69,7 @@ void send_data_to_server(wifi_ap_record_t *records, int cantidad)
         ESP_LOGI(APP_TAG, "Datos enviados de forma limpia. Código HTTP: %d", esp_http_client_get_status_code(client));
     }
     
-    // 3. Limpieza obligada de memoria RAM en C
+    // 3. Limpieza de memoria RAM en C
     esp_http_client_cleanup(client);
     cJSON_Delete(root);
     free(post_data);

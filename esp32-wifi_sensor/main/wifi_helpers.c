@@ -12,7 +12,7 @@
 #include "wifi_helpers.h"
 #include "config.h"
 
-// Definimos los datos de la red específica a la que te querés conectar
+// Datos de la red específica a conectar
 #define TARGET_SSID CONFIG_EXAMPLE_WIFI_SSID
 #define TARGET_PASS CONFIG_EXAMPLE_WIFI_PASSWORD
 
@@ -36,7 +36,7 @@ void wifi_scan(wifi_ap_record_t *ap_records)
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
     ESP_LOGI(APP_TAG, "Redes encontradas en total: %d", ap_count);
 
-    // Si encontró redes, procesamos o hasta MAX_SCAN_RECORDS
+    // Si encontró redes, procesamos hasta MAX_SCAN_RECORDS
     if (ap_count > 0) {
         // Ajustamos la cantidad para leer: si detectó 30, solo traemos un máximo de 10 bytes/estructuras
         uint16_t number_to_read = (ap_count > MAX_SCAN_RECORDS) ? MAX_SCAN_RECORDS : ap_count;

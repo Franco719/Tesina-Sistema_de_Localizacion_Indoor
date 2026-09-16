@@ -22,4 +22,7 @@ class MuestraWifi(db.Model):
         
         db.session.add(nueva_muestra)
         
+        # No hago commit debido a que este metodo es usado por la API cuando crea muestras, y hacer varios commits
+        # seguidos no es conveniente. Por lo tanto, en la API.
+        
         return nueva_muestra

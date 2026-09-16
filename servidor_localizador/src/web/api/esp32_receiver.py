@@ -41,7 +41,6 @@ def recibir_datos_esp32():
         # Modo entrenamiento: Recorre la lista validada e iserta en la Base de Datos
         print(f"📥 [ENTRENAMIENTO - {sala}] Guardando ráfaga en Base de Datos Local.")
         for red in data_validada:
-            # Usamos el método constructor de tu modelo pasando los datos individuales de cada iteración
             MuestraWifi.crear_muestra(
                 nodo_id=nodo_id,
                 sala=sala,
@@ -50,7 +49,7 @@ def recibir_datos_esp32():
                 #fecha_registro=datetime.now()
             )
             
-            
+        # El commit lo hago acá para no hacer uno por cada muestra guardada.
         db.session.commit()
     
     return jsonify({"status": "success", "message": "Lectura almacenada con éxito"}), 200
