@@ -25,6 +25,7 @@ Desktop.ini
 # IDE / EDITORES
 # ============================================================
 
+.devcontainer
 # VS Code
 .vscode/
 *.code-workspace

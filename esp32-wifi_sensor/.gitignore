@@ -60,6 +60,8 @@ dist/
 venv/
 .venv/
 env/
+.env/
+.env
 
 # Language Servers
 .clangd/
@@ -77,5 +79,5 @@ Desktop.ini
 *.suo       # Visual Studio Solution User Options
 *.sln.docstates # Visual Studio
 config.h
-.devcontainer
-.vscode
+.devcontainer/
+.vscode/
