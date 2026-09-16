@@ -202,134 +202,133 @@
 
     {% if sala_activa %}
 
-    <script>
+        <script>
 
-        function traerSenalesDesdeLaAPI() {
+            function traerSenalesDesdeLaAPI() {
 
-            fetch('/modulo_entrenamiento/entrenamiento/redes_vivas')
+                fetch('/modulo_entrenamiento/entrenamiento/redes_vivas')
 
-                .then(response => response.json())
+                    .then(response => response.json())
 
-                .then(data => {
+                    .then(data => {
 
-                    // La sesión de entrenamiento expiró
-                    if (!data.activo) {
+                        // La sesión de entrenamiento expiró
+                        if (!data.activo) {
+        
+                            mostrarEntrenamientoFinalizado();
 
-                        mostrarEntrenamientoFinalizado();
-
-                        return;
-                    }
-
-
-                    const tabla =
-                        document.getElementById('tabla-redes');
+                            return;
+                        }
 
 
-                    if (!tabla) {
-                        return;
-                    }
+                        const tabla =
+                            document.getElementById('tabla-redes');
 
 
-                    tabla.innerHTML = '';
+                        if (!tabla) {
+                            return;
+                        }
 
 
-                    data.muestras.forEach(red => {
-
-                        const colorRssi =
-                            red.rssi > -70
-                                ? 'text-green-600 font-semibold'
-                                : 'text-orange-500';
+                        tabla.innerHTML = '';
 
 
-                        tabla.innerHTML += `
-                            <tr class="border-t border-gray-200">
+                        data.muestras.forEach(red => {
 
-                                <td class="p-2 pl-4 font-mono text-xs text-gray-700">
-                                    ${red.ssid}
-                                </td>
+                            const colorRssi =
+                                red.rssi_puro > -70
+                                    ? 'text-green-600 font-semibold'
+                                    : 'text-orange-500';
 
-                                <td class="p-2 pr-4 text-right ${colorRssi}">
-                                    ${red.rssi} dBm
-                                </td>
 
-                            </tr>
-                        `;
+                            tabla.innerHTML += `
+                                <tr class="border-t border-gray-200">
+
+                                    <td class="p-2 pl-4 font-mono text-xs text-gray-700">
+                                        ${red.ssid}
+                                    </td>
+
+                                    <td class="p-2 pr-4 text-right ${colorRssi}">
+                                        ${red.rssi_puro} dBm
+                                    </td>
+
+                                </tr>
+                            `;
+                        });
+
+                    })
+
+                    .catch(err => {
+
+                        console.error(
+                            "Error al consultar el estado:",
+                            err
+                        );
+
                     });
-
-                })
-
-                .catch(err => {
-
-                    console.error(
-                        "Error al consultar el estado:",
-                        err
-                    );
-
-                });
-        }
+            }
 
 
-        // Actualizar cada 3 segundos
-        setInterval(
-            traerSenalesDesdeLaAPI,
-            3000
-        );
+            // Actualizar cada 3 segundos
+            setInterval(
+                traerSenalesDesdeLaAPI,
+                3000
+            );
 
 
-        // Primera ejecución
-        traerSenalesDesdeLaAPI();
+            // Primera ejecución
+            traerSenalesDesdeLaAPI();
 
-        function mostrarEntrenamientoFinalizado() {
+            function mostrarEntrenamientoFinalizado() {
 
-            document.body.innerHTML = `
+                document.body.innerHTML = `
 
-                <div class="min-h-screen flex items-center justify-center bg-gray-100">
+                    <div class="min-h-screen flex items-center justify-center bg-gray-100">
 
-                    <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+                        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
 
-                        <div class="text-5xl mb-4">
-                            ⏱️
+                            <div class="text-5xl mb-4">
+                                ⏱️
+                            </div>
+
+                            <h1 class="text-2xl font-bold text-gray-800 mb-3">
+                                Entrenamiento finalizado
+                            </h1>
+
+                            <p class="text-gray-600 mb-6">
+                                La sesión de toma de muestras expiró
+                                automáticamente.
+                            </p>
+
+                            <a
+                                href="/modulo_entrenamiento/pre-entrenamiento"
+                                class="inline-block w-full bg-blue-600 hover:bg-blue-700
+                                    text-white font-semibold py-2.5 rounded-lg">
+
+                                Iniciar nuevo entrenamiento
+
+                            </a>
+
                         </div>
-
-                        <h1 class="text-2xl font-bold text-gray-800 mb-3">
-                            Entrenamiento finalizado
-                        </h1>
-
-                        <p class="text-gray-600 mb-6">
-                            La sesión de toma de muestras expiró
-                            automáticamente.
-                        </p>
-
-                        <a
-                            href="/modulo_entrenamiento/pre-entrenamiento"
-                            class="inline-block w-full bg-blue-600 hover:bg-blue-700
-                                text-white font-semibold py-2.5 rounded-lg">
-
-                            Iniciar nuevo entrenamiento
-
-                        </a>
 
                     </div>
 
-                </div>
+                `;
 
-            `;
+            }
 
-        }
+            
+            window.addEventListener("beforeunload", function () {
 
-    </script>
+                navigator.sendBeacon(
+                    "/modulo_entrenamiento/entrenamiento/salir"
+                );
+
+            });
+
+        </script>
 
     {% endif %}
-
-    <script>
-        window.addEventListener("beforeunload", function () {
-            navigator.sendBeacon(
-                "/modulo_entrenamiento/entrenamiento/salir"
-            );
-        });
-    </script>
-
-
 
 </body>
 </html>

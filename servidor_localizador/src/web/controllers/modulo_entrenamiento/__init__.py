@@ -21,8 +21,10 @@ def iniciar_muestreo():
     nombre_sala = request.form.get("nombre_sala", "").strip()
     
     if nombre_sala:
+        print(f"ANTES DE GUARDAR EN REDIS: {nombre_sala}")
         redis_db.set("Sala_Actual", nombre_sala, ex=300) # Después de 5 minutos aproximadamente, se detedrá el entrenamiento por la expiracion de la variable. Es apropósito para evitar un muestreo no deseado
-        
+        print(f"DESPUES DE GUARDAR EN REDIS: {redis_db.get("Sala_Actual")}")
+    
     return render_template("entrenamiento.html", sala_activa=nombre_sala)
 
 
@@ -30,6 +32,8 @@ def iniciar_muestreo():
 def obtener_redes_vivas():
     """Obtiene las últimas 10 redes guardadas en la Base de Datos para la sala en entrenamiento"""
     sala_actual = redis_db.get("Sala_Actual")
+    
+    print(f"SALA OBTENID AL ACTUALIZAR: {sala_actual}")
     
     if not sala_actual:
         return jsonify({
