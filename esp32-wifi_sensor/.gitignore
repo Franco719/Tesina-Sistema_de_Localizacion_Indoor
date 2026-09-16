@@ -81,3 +81,5 @@ Desktop.ini
 config.h
 .devcontainer/
 .vscode/
+devcontainer/
+vscode/
