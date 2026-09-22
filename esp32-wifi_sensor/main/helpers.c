@@ -29,10 +29,26 @@ void send_data_to_server(wifi_ap_record_t *records, int cantidad)
             }
         }
 
+        // Convierto el BSSID a string
+        char bssid_str[18];
+
+        snprintf(
+            bssid_str,
+            sizeof(bssid_str),
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            records[i].bssid[0],
+            records[i].bssid[1],
+            records[i].bssid[2],
+            records[i].bssid[3],
+            records[i].bssid[4],
+            records[i].bssid[5]
+        );
+
         // Si pasó los filtros, lo agregamos de forma segura al JSON
         if (ssid_valido) {
             cJSON *item = cJSON_CreateObject();
             cJSON_AddStringToObject(item, "ssid", (char*)records[i].ssid);
+            cJSON_AddStringToObject(item, "bssid", bssid_str);
             cJSON_AddNumberToObject(item, "rssi", records[i].rssi);
             cJSON_AddItemToArray(root, item);
         }

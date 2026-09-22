@@ -45,7 +45,7 @@ def obtener_redes_vivas():
                                         .order_by(MuestraWifi.fecha_registro.desc())\
                                         .limit(10).all()
                                         
-    lista_json = [{"ssid": m.ssid, "rssi_puro": m.rssi_puro} for m in ultimas_muestras]
+    lista_json = [{"ssid": m.ssid, "rssi_puro": m.rssi_puro, "bssid": m.bssid} for m in ultimas_muestras]
     return jsonify({
         "activo": True,
         "muestras": lista_json

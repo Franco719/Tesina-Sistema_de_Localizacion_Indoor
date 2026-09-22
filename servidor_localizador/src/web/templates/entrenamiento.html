@@ -138,19 +138,19 @@
                 <table class="w-full text-sm">
 
                     <thead class="bg-gray-50">
-
                         <tr>
-
                             <th class="text-left p-2 pl-4 text-gray-600">
                                 Red
+                            </th>
+
+                            <th class="text-left p-2 text-gray-600">
+                                BSSID
                             </th>
 
                             <th class="text-right p-2 pr-4 text-gray-600">
                                 RSSI
                             </th>
-
                         </tr>
-
                     </thead>
 
 
@@ -279,43 +279,76 @@
             // Primera ejecución
             traerSenalesDesdeLaAPI();
 
-            function mostrarEntrenamientoFinalizado() {
 
-                document.body.innerHTML = `
+            function traerSenalesDesdeLaAPI() {
 
-                    <div class="min-h-screen flex items-center justify-center bg-gray-100">
+                fetch('/modulo_entrenamiento/entrenamiento/redes_vivas')
 
-                        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+                    .then(response => response.json())
 
-                            <div class="text-5xl mb-4">
-                                ⏱️
-                            </div>
+                    .then(data => {
 
-                            <h1 class="text-2xl font-bold text-gray-800 mb-3">
-                                Entrenamiento finalizado
-                            </h1>
+                        // La sesión de entrenamiento expiró
+                        if (!data.activo) {
 
-                            <p class="text-gray-600 mb-6">
-                                La sesión de toma de muestras expiró
-                                automáticamente.
-                            </p>
+                            mostrarEntrenamientoFinalizado();
 
-                            <a
-                                href="/modulo_entrenamiento/pre-entrenamiento"
-                                class="inline-block w-full bg-blue-600 hover:bg-blue-700
-                                    text-white font-semibold py-2.5 rounded-lg">
+                            return;
+                        }
 
-                                Iniciar nuevo entrenamiento
 
-                            </a>
+                        const tabla =
+                            document.getElementById('tabla-redes');
 
-                        </div>
 
-                    </div>
+                        if (!tabla) {
+                            return;
+                        }
 
-                `;
 
+                        tabla.innerHTML = '';
+
+
+                        data.muestras.forEach(red => {
+
+                            const colorRssi =
+                                red.rssi_puro > -70
+                                    ? 'text-green-600 font-semibold'
+                                    : 'text-orange-500';
+
+
+                            tabla.innerHTML += `
+                                <tr class="border-t border-gray-200">
+
+                                    <td class="p-2 pl-4 font-mono text-xs text-gray-700">
+                                        ${red.ssid}
+                                    </td>
+
+                                    <td class="p-2 font-mono text-xs text-gray-500">
+                                        ${red.bssid}
+                                    </td>
+
+                                    <td class="p-2 pr-4 text-right ${colorRssi}">
+                                        ${red.rssi_puro} dBm
+                                    </td>
+
+                                </tr>
+                            `;
+                        });
+
+                    })
+
+                    .catch(err => {
+
+                        console.error(
+                            "Error al consultar el estado:",
+                            err
+                        );
+
+                    });
             }
+
+
 
             
             window.addEventListener("beforeunload", function () {
