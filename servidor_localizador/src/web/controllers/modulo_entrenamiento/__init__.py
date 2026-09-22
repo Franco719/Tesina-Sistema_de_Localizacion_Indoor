@@ -56,4 +56,4 @@ def obtener_redes_vivas():
 def salir_entrenamiento():
     """Permite detener el entrenamiento ante una salida abrupta de la página"""
     redis_db.delete("Sala_Actual")
-    return "", 204
+    return "", 204 
