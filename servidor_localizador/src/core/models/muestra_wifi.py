@@ -7,6 +7,7 @@ class MuestraWifi(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nodo_id = db.Column(db.String(10), nullable=False)
     sala = db.Column(db.String(50), nullable=False)
+    bssid = db.Column(db.String(50), nullable=False)
     ssid = db.Column(db.String(32), nullable=False)
     rssi_puro = db.Column(db.Integer, nullable=False)
     rssi_filtrado = db.Column(db.Integer, nullable=True) 
@@ -14,7 +15,7 @@ class MuestraWifi(db.Model):
     metodo_filtrado = db.Column(db.String(32), nullable=False)
 
     def __repr__(self):
-        return f"<Muestra {self.sala} - {self.ssid}: {self.rssi}dBm>"
+        return f"<Muestra {self.sala} - {self.ssid} | {self.bssid}: {self.rssi}dBm>"
     
     @classmethod
     def crear_muestra (cls, **kwargs):

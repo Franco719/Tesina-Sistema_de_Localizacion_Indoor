@@ -49,7 +49,19 @@ void wifi_scan(wifi_ap_record_t *ap_records)
         // 4. El bucle 'for' clásico para recorrer el array
         for (int i = 0; i < number_to_read; i++) {
             // Imprimimos el nombre de la red (SSID) y su fuerza de señal (RSSI)
-            ESP_LOGI(APP_TAG, "[%d] SSID: %-20s | RSSI: %d dBm", i + 1, ap_records[i].ssid, ap_records[i].rssi);
+            ESP_LOGI(
+                APP_TAG,
+                "[%d] SSID: %-20s | BSSID: %02X:%02X:%02X:%02X:%02X:%02X | RSSI: %d dBm",
+                i + 1,
+                ap_records[i].ssid,
+                ap_records[i].bssid[0],
+                ap_records[i].bssid[1],
+                ap_records[i].bssid[2],
+                ap_records[i].bssid[3],
+                ap_records[i].bssid[4],
+                ap_records[i].bssid[5],
+                ap_records[i].rssi
+            );
 
         }
 
@@ -65,7 +77,19 @@ void connect_wifi (wifi_ap_record_t *ap_records)
     bool red_encontrada = false;
     while ((!red_encontrada) && (i < MAX_SCAN_RECORDS)) {
         if (strcmp((char *)ap_records[i].ssid, TARGET_SSID) == 0) {
-            ESP_LOGW(APP_TAG, "¡Se encontró la red objetivo '%s' con señal %d dBm!", TARGET_SSID, ap_records[i].rssi);
+            ESP_LOGI(
+                APP_TAG,
+                "[%d] SSID: %-20s | BSSID: %02X:%02X:%02X:%02X:%02X:%02X | RSSI: %d dBm",
+                i + 1,
+                ap_records[i].ssid,
+                ap_records[i].bssid[0],
+                ap_records[i].bssid[1],
+                ap_records[i].bssid[2],
+                ap_records[i].bssid[3],
+                ap_records[i].bssid[4],
+                ap_records[i].bssid[5],
+                ap_records[i].rssi
+            );
             
             ESP_LOGI(APP_TAG, "Configurando credenciales y conectando...");
             

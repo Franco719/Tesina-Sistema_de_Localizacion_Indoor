@@ -46,6 +46,7 @@ def recibir_datos_esp32():
                 sala=sala,
                 ssid=red.get("ssid"),
                 rssi_puro=red.get("rssi"),
+                bssid=red.get("bssid"),
                 #fecha_registro=datetime.now()
             )
             
