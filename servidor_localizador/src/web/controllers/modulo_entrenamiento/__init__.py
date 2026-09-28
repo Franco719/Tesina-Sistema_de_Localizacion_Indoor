@@ -62,6 +62,7 @@ def obtener_redes_vivas():
     sala_actual = redis_db.get("Sala_Actual")
     
     if not sala_actual:
+        print("aaaaaa")
         return jsonify({
             "activo": False,
             "muestras": []

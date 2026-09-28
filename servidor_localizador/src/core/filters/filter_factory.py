@@ -6,17 +6,19 @@ from src.core.filters.median_filter import FiltroMedia
 
 def crear_filtro(metodo, ventana=None):
 
-    if metodo == "Kalman":
-        return FiltroKalman()
+    match metodo:
+        
+        case "Kalman":
+            return FiltroKalman()
 
-    if metodo == "Mediana":
-        return FiltroMediana(ventana)
+        case "Mediana":
+            return FiltroMediana(ventana)
 
-    if metodo == "Media":
-        return FiltroMedia(ventana)
+        case "Media":
+            return FiltroMedia(ventana)
 
-    if metodo == "Ninguno":
-        return SinFiltro()
+        case "Ninguno":
+            return SinFiltro()
 
     raise ValueError(f"Método desconocido: {metodo}")
 
