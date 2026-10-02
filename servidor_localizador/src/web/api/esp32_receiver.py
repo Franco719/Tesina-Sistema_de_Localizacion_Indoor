@@ -1,5 +1,6 @@
 from flask import request, jsonify, Blueprint, render_template, redirect, url_for
 from src.core.database.redis_client import guardar_lectura_cruda, db as redis_db
+from src.core.filters.filter_manager import filtro_manager
 from src.core.database import db
 from src.core.models.muestra_wifi import MuestraWifi
 from src.web.schemas.esp32_receiver import wifi_records_schema
@@ -30,6 +31,9 @@ def recibir_datos_esp32():
         return jsonify({"status": "error", "errors": err.messages}), 422
     
     sala = redis_db.get("Sala_Actual")
+    metodo_filtrado = redis_db.get("Metodo_Filtrado")
+    if metodo_filtrado == ("Mediana" or "Media"):
+        ventana = redis_db.get("Ventana")
     nodo_id = "01" # Por ahora hardcodeado, luego si hay más de uno hay que modificar en el esp32 para que mande el id
     
     if not sala:
@@ -40,14 +44,26 @@ def recibir_datos_esp32():
     else:
         # Modo entrenamiento: Recorre la lista validada e iserta en la Base de Datos
         print(f"📥 [ENTRENAMIENTO - {sala}] Guardando ráfaga en Base de Datos Local.")
+        
+        filtro = filtro_manager.obtener()
+        
         for red in data_validada:
+
+            rssi_puro = red.get("rssi")
+
+            rssi_filtrado = filtro.filtrar(
+                red.get("bssid"),
+                rssi_puro
+            )
+
             MuestraWifi.crear_muestra(
                 nodo_id=nodo_id,
                 sala=sala,
                 ssid=red.get("ssid"),
-                rssi_puro=red.get("rssi"),
                 bssid=red.get("bssid"),
-                #fecha_registro=datetime.now()
+                rssi_puro=rssi_puro,
+                rssi_filtrado=rssi_filtrado,
+                metodo_filtrado=filtro.get_nombre_metodo()
             )
             
         # El commit lo hago acá para no hacer uno por cada muestra guardada.
