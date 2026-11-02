@@ -4,9 +4,11 @@ from src.core.filters.filter_strategy import FiltroRSSI
 
 class FiltroMedia(FiltroRSSI):
 
-    def __init__(self, tamaño_ventana=5):
+    def __init__(self, nodo_id: int, tamaño_ventana=5):
+        self.nodo = nodo_id
         self.tamaño_ventana = tamaño_ventana
         self.bssid = {}
+        self.finalizado = False
 
 
     def actualizar(self, redes):
@@ -17,7 +19,9 @@ class FiltroMedia(FiltroRSSI):
             )
 
 
-    def filtrar(self, bssid, rssi):
+    def filtrar(self, bssid, rssi , estado = None):
+        
+        self.finalizado = False
 
         if bssid not in self.bssid:
             self.bssid[bssid] = deque(
@@ -41,3 +45,10 @@ class FiltroMedia(FiltroRSSI):
 
     def get_nombre_metodo(self):
         return "Media"
+    
+    
+    def finalizar(self):
+        if self.finalizado:
+            return
+        
+        self.finalizado = True

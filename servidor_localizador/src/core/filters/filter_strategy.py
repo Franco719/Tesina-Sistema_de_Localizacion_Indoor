@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 class FiltroRSSI(ABC):
     
     @abstractmethod
-    def filtrar(self, bssid: str, rssi: str):
+    def filtrar(self, bssid: str, rssi: str, estado = None):
         pass
     
     
@@ -18,5 +18,10 @@ class FiltroRSSI(ABC):
     
     
     @abstractmethod
-    def get_nombre_metodo() -> str:
+    def get_nombre_metodo(self) -> str:
+        pass
+    
+    
+    @abstractmethod
+    def finalizar(self):
         pass

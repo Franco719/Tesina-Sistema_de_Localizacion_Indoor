@@ -15,6 +15,8 @@ from flask import render_template
 #from web.controllers.payments.handlers.style_date import style as style_date
 #from src.web.upload import storage
 import locale
+from config import REDIS_HOST, REDIS_PORT
+from celery_app import init_celery
 """from src.web.controllers.teams.handlers.files.sytle_file_names import (
     style as style_file_name,
 )"""
@@ -61,6 +63,16 @@ def create_app(env="development", static_folder="../../static"):
     #@app.cli.command(name="seed-db")
     #def seed():
     #    seeds.seed_db()
+    
+    # Confuracion de los worker Celery
+    app.config["CELERY"] = {
+        "broker_url": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+        "result_backend": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
+        "task_ignore_result": False,
+    }
+    
+    # Configurar Celery
+    init_celery(app)
 
     locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 

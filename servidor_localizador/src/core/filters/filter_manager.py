@@ -1,19 +1,29 @@
 from src.core.filters.filter_factory import crear_filtro
+from threading import Lock
 
 
 class FiltroManager:
 
     def __init__(self):
         self.filtro_actual = None
+        self.lock = Lock()
 
-    def iniciar(self, metodo, ventana=None):
-        self.filtro_actual = crear_filtro(metodo, ventana)
+    def iniciar(self, metodo, nodo_id: int, sala: str = None , ventana=None):
+        with self.lock:
+            self.filtro_actual = crear_filtro(metodo, nodo_id, sala, ventana)
 
     def obtener(self):
-        return self.filtro_actual
+        with self.lock:
+            return self.filtro_actual
 
     def finalizar(self):
-        self.filtro_actual = None
+        with self.lock:
+            if self.filtro_actual is None:
+                return
+
+            self.filtro_actual.finalizar()
+            self.filtro_actual = None
 
 
-filtro_manager = FiltroManager()
+filtro_muestreo = FiltroManager()
+filtro_prediccion = FiltroManager()

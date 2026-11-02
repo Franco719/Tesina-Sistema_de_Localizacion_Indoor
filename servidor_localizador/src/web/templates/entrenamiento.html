@@ -4,74 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Recolección de Dataset - Proyecto Indoor</title>
+    <title>Entrenamiento de Redes Neuronales - Proyecto Indoor</title>
 
-    <!-- Tailwind CSS vía CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 font-sans min-h-screen">
 
-    <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
 
-        <h1 class="text-2xl font-bold text-gray-800 text-center mb-2">
-            📡 Panel de Entrenamiento
-        </h1>
+        <!-- ENCABEZADO -->
+        <header class="mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        <p class="text-sm text-gray-500 text-center mb-6">
-            Recolección de huellas Wi-Fi (Fingerprinting)
-        </p>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">
+                        🧠 Entrenamiento de redes neuronales
+                    </h1>
+
+                    <p class="text-gray-500 mt-2">
+                        Administrá los modelos de localización Wi-Fi.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('modulo_entrenamiento.vista_entrenamiento') }}"
+                    class="inline-flex justify-center items-center px-4 py-2
+                           bg-white border border-gray-300 rounded-lg
+                           text-gray-700 font-medium hover:bg-gray-50 transition">
+
+                    ↻ Actualizar listado
+                </a>
+
+            </div>
+        </header>
 
 
-        {% if not sala_activa %}
+        <!-- MENSAJES FLASH -->
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% if mensajes %}
+                <div class="space-y-3 mb-6">
+                    {% for categoria, mensaje in mensajes %}
 
-            <!-- ========================= -->
-            <!-- ESTADO: DETENIDO -->
-            <!-- ========================= -->
+                        <div
+                            class="p-4 rounded-lg border
+                            {% if categoria == 'error' %}
+                                bg-red-50 border-red-200 text-red-800
+                            {% elif categoria == 'success' %}
+                                bg-green-50 border-green-200 text-green-800
+                            {% else %}
+                                bg-blue-50 border-blue-200 text-blue-800
+                            {% endif %}">
 
-            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-6 text-center">
+                            {{ mensaje }}
 
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 mb-2">
-                    🔴 Grabación detenida
-                </span>
+                        </div>
 
-                <p class="text-xs text-gray-600">
-                    El sistema procesa los datos en tiempo real,
-                    pero no los almacena en el histórico.
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+
+        <!-- ============================== -->
+        <!-- NUEVO ENTRENAMIENTO -->
+        <!-- ============================== -->
+
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-800">
+                    Nuevo entrenamiento
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Configurá y ejecutá un nuevo entrenamiento del modelo.
                 </p>
-
             </div>
 
 
             <form
-                action="/modulo_entrenamiento/entrenamiento"
+                action="{{ url_for('modulo_entrenamiento.entrenar') }}"
                 method="POST"
-                class="space-y-4">
+                class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
 
+                <!-- NOMBRE -->
                 <div>
-
                     <label
-                        for="nombre_sala"
-                        class="block text-sm font-medium text-gray-700 mb-1">
+                        for="nombre_entrenamiento"
+                        class="block text-sm font-medium text-gray-700 mb-2">
 
-                        Nombre de la Sala / Aula
+                        Nombre del entrenamiento
 
                     </label>
 
                     <input
-                        id="nombre_sala"
+                        id="nombre_entrenamiento"
+                        name="nombre_entrenamiento"
                         type="text"
-                        name="nombre_sala"
+                        maxlength="100"
                         required
-                        placeholder="Ej: Laboratorio 3, Aula 102"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg
-                            focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        placeholder="Ej.: Modelo inicial con Kalman"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg
+                               focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
 
+
+                <!-- MÉTODO DE FILTRADO -->
+                <div>
                     <label
                         for="metodo_filtrado"
-                        class="block text-sm font-medium text-gray-700 mb-1 mt-4">
+                        class="block text-sm font-medium text-gray-700 mb-2">
 
-                        Método de Filtrado de Señal
+                        Método de filtrado
 
                     </label>
 
@@ -79,314 +124,540 @@
                         id="metodo_filtrado"
                         name="metodo_filtrado"
                         required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg
-                            focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg
+                               focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
                         <option value="Kalman">Filtro Kalman</option>
-                        <option value="Mediana">Mediana en una Ventana</option>
-                        <option value="Media">Media en una Ventana</option>
-                        <option value="Ninguno">Sin Filtrado</option>
+                        <option value="Mediana">Mediana en una ventana</option>
+                        <option value="Media">Media en una ventana</option>
+                        <option value="Ninguno">Sin filtrado</option>
 
                     </select>
+                </div>
 
-                    <!-- Configuración de la mediana -->
-                    <div
-                        id="configuracion_ventana"
-                        class="hidden mt-4">
 
-                        <label
-                            for="ventana"
-                            class="block text-sm font-medium text-gray-700 mb-1">
+                <!-- BOTÓN -->
+                <div>
+                    <button
+                        id="btn-entrenar"
+                        type="submit"
+                        class="w-full px-5 py-2.5 bg-blue-600 hover:bg-blue-700
+                               text-white font-semibold rounded-lg transition
+                               focus:ring-2 focus:ring-blue-400 focus:outline-none">
 
-                            Tamaño de ventana
+                        ▶ Iniciar entrenamiento
 
-                        </label>
+                    </button>
+                </div>
 
-                        <input
-                            id="ventana"
-                            type="number"
-                            name="ventana"
-                            min="3"
-                            step="2"
-                            value="5"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg
-                                focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </form>
 
-                        <p class="text-xs text-gray-500 mt-1">
-                            Cantidad de mediciones utilizadas para el calculo.
+
+            <div class="mt-5 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+
+                <p class="text-sm text-blue-800">
+                    <strong>Importante:</strong>
+                    el entrenamiento se ejecuta en segundo plano. Podés consultar
+                    su estado en el listado sin tener que esperar a que finalice.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================== -->
+        <!-- LISTADO DE ENTRENAMIENTOS -->
+        <!-- ============================== -->
+
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200">
+
+            <div class="p-6 border-b border-gray-200">
+
+                <div class="flex flex-col sm:flex-row sm:items-center
+                            sm:justify-between gap-3">
+
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Entrenamientos registrados
+                        </h2>
+
+                        <p class="text-sm text-gray-500 mt-1">
+                            Consultá los modelos generados y su estado de ejecución.
                         </p>
-
                     </div>
 
-                </div>
+                    <span class="inline-flex items-center self-start px-3 py-1
+                                 rounded-full bg-gray-100 text-gray-700
+                                 text-sm font-medium">
 
-                <button
-                    type="submit"
-                    class="w-full bg-blue-600 hover:bg-blue-700
-                        text-white font-semibold py-2.5 rounded-lg
-                        transition duration-200">
+                        {{ entrenamientos|length }} registrados
 
-                    📡 Tomar muestras
-
-                </button>
-
-            </form>
-
-
-        {% else %}
-
-            <!-- ========================= -->
-            <!-- ESTADO: GRABANDO -->
-            <!-- ========================= -->
-
-            <div class="bg-blue-50 border border-blue-200 p-5 rounded-lg mb-6 text-center">
-
-                <span class="inline-flex items-center px-3 py-1 rounded-full
-                             text-sm font-medium bg-green-100 text-green-800 mb-2">
-
-                    🟢 Grabando activamente
-
-                </span>
-
-
-                <p class="text-sm text-gray-700 font-semibold mt-1">
-
-                    Sala actual:
-
-                    <span class="text-blue-700 text-lg block font-bold">
-                        {{ sala_activa }}
                     </span>
 
-                </p>
-
-
-                <p class="text-xs text-gray-500 mt-2">
-
-                    Cada paquete enviado por el ESP32
-                    será registrado bajo esta etiqueta.
-
-                </p>
+                </div>
 
             </div>
 
 
-            <!-- ========================= -->
-            <!-- ÚLTIMAS MUESTRAS -->
-            <!-- ========================= -->
+            {% if entrenamientos %}
 
-            <div class="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                <div class="overflow-x-auto">
 
-                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <table class="w-full text-sm text-left">
 
-                    <h2 class="text-sm font-semibold text-gray-700">
-                        Últimas mediciones
-                    </h2>
+                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+
+                            <tr>
+                                <th class="px-5 py-4 whitespace-nowrap">ID</th>
+                                <th class="px-5 py-4 min-w-48">Entrenamiento</th>
+                                <th class="px-5 py-4">Estado</th>
+                                <th class="px-5 py-4 whitespace-nowrap">Filtrado</th>
+                                <th class="px-5 py-4 whitespace-nowrap">Fecha de inicio</th>
+                                <th class="px-5 py-4 whitespace-nowrap">Resultados</th>
+                                <th class="px-5 py-4 text-center">Acciones</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody class="divide-y divide-gray-100">
+
+                            {% for entrenamiento in entrenamientos %}
+
+                                <tr class="hover:bg-gray-50 transition">
+
+                                    <!-- ID -->
+                                    <td class="px-5 py-4 font-mono text-gray-600">
+                                        #{{ entrenamiento.id }}
+                                    </td>
+
+
+                                    <!-- NOMBRE -->
+                                    <td class="px-5 py-4">
+
+                                        <div class="font-semibold text-gray-800">
+                                            {{ entrenamiento.nombre }}
+                                        </div>
+
+                                        {% if entrenamiento.estado.value == 'completado' %}
+
+                                            <div class="text-xs text-green-700 mt-1">
+                                                Modelo disponible
+                                            </div>
+
+                                        {% elif entrenamiento.estado.value == 'fallido' %}
+
+                                            <div class="text-xs text-red-600 mt-1">
+                                                No se pudo completar
+                                            </div>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ESTADO -->
+                                    <td class="px-5 py-4 whitespace-nowrap">
+
+                                        {% if entrenamiento.estado.value == 'pendiente' %}
+
+                                            <span class="inline-flex items-center gap-2 px-3 py-1
+                                                         rounded-full bg-yellow-100 text-yellow-800
+                                                         font-medium text-xs">
+
+                                                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                                Pendiente
+
+                                            </span>
+
+                                        {% elif entrenamiento.estado.value == 'ejecutando' %}
+
+                                            <span class="inline-flex items-center gap-2 px-3 py-1
+                                                         rounded-full bg-blue-100 text-blue-800
+                                                         font-medium text-xs">
+
+                                                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                                Ejecutando
+
+                                            </span>
+
+                                        {% elif entrenamiento.estado.value == 'completado' %}
+
+                                            <span class="inline-flex items-center gap-2 px-3 py-1
+                                                         rounded-full bg-green-100 text-green-800
+                                                         font-medium text-xs">
+
+                                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                                Completado
+
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="inline-flex items-center gap-2 px-3 py-1
+                                                         rounded-full bg-red-100 text-red-800
+                                                         font-medium text-xs">
+
+                                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                                Fallido
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- MÉTODO -->
+                                    <td class="px-5 py-4 whitespace-nowrap text-gray-700">
+
+                                        {% if entrenamiento.metodo_filtrado == 'Kalman' %}
+                                            <span class="px-2 py-1 rounded bg-purple-50 text-purple-700">
+                                                Kalman
+                                            </span>
+
+                                        {% elif entrenamiento.metodo_filtrado == 'Mediana' %}
+                                            <span class="px-2 py-1 rounded bg-indigo-50 text-indigo-700">
+                                                Mediana
+                                            </span>
+
+                                        {% elif entrenamiento.metodo_filtrado == 'Media' %}
+                                            <span class="px-2 py-1 rounded bg-teal-50 text-teal-700">
+                                                Media
+                                            </span>
+
+                                        {% else %}
+                                            <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">
+                                                Sin filtrado
+                                            </span>
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- FECHA DE INICIO -->
+                                    <td class="px-5 py-4 whitespace-nowrap text-gray-600">
+
+                                        {% if entrenamiento.fecha_inicio %}
+                                            {{ entrenamiento.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- RESULTADOS -->
+                                    <td class="px-5 py-4 min-w-64">
+
+                                        {% if entrenamiento.estado.value == 'completado' %}
+
+                                            <div class="space-y-2">
+
+                                                <div class="flex justify-between gap-4">
+                                                    <span class="text-gray-500">Accuracy</span>
+
+                                                    <span class="font-semibold text-gray-800">
+                                                        {% if entrenamiento.accuracy is not none %}
+                                                            {{ "%.2f"|format(entrenamiento.accuracy * 100) }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+
+
+                                                <div class="flex justify-between gap-4">
+                                                    <span class="text-gray-500">Loss</span>
+
+                                                    <span class="font-medium text-gray-800">
+                                                        {% if entrenamiento.loss is not none %}
+                                                            {{ "%.4f"|format(entrenamiento.loss) }}
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+
+
+                                                <div class="flex justify-between gap-4">
+                                                    <span class="text-gray-500">Iteraciones</span>
+
+                                                    <span class="font-medium text-gray-800">
+                                                        {{ entrenamiento.iteraciones if entrenamiento.iteraciones is not none else '—' }}
+                                                    </span>
+                                                </div>
+
+
+                                                <div class="border-t border-gray-100 pt-2 mt-2 text-xs text-gray-500 space-y-1">
+
+                                                    <p>
+                                                        Muestras:
+                                                        {{ entrenamiento.cant_rafagas_generadas if entrenamiento.cant_rafagas_generadas is not none else '—' }}
+                                                    </p>
+
+                                                    <p>
+                                                        BSSID:
+                                                        {{ entrenamiento.cant_bssids if entrenamiento.cant_bssids is not none else '—' }}
+                                                    </p>
+
+                                                    <p>
+                                                        Salas:
+                                                        {{ entrenamiento.cant_salas if entrenamiento.cant_salas is not none else '—' }}
+                                                    </p>
+
+                                                </div>
+
+                                                {% if entrenamiento.fecha_fin %}
+
+                                                    <p class="text-xs text-green-700 pt-1">
+                                                        Finalizado:
+                                                        {{ entrenamiento.fecha_fin.strftime('%d/%m/%Y %H:%M') }}
+                                                    </p>
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        {% elif entrenamiento.estado.value == 'fallido' %}
+
+                                            <div class="text-red-700">
+
+                                                <p class="font-medium">
+                                                    Entrenamiento fallido
+                                                </p>
+
+                                                {% if entrenamiento.errores %}
+                                                    <details class="mt-2">
+                                                        <summary class="cursor-pointer text-xs underline">
+                                                            Ver errores
+                                                        </summary>
+
+                                                        <pre class="mt-2 max-w-xs whitespace-pre-wrap break-words text-xs">{{ entrenamiento.errores }}</pre>
+                                                    </details>
+                                                {% endif %}
+
+                                                {% if entrenamiento.fecha_fin %}
+                                                    <p class="text-xs text-gray-500 mt-2">
+                                                        Finalizado:
+                                                        {{ entrenamiento.fecha_fin.strftime('%d/%m/%Y %H:%M') }}
+                                                    </p>
+                                                {% endif %}
+
+                                            </div>
+
+                                        {% elif entrenamiento.estado.value == 'ejecutando' %}
+
+                                            <p class="text-blue-700">
+                                                El modelo se está entrenando...
+                                            </p>
+
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                Actualizá el listado para consultar los avances.
+                                            </p>
+
+                                        {% else %}
+
+                                            <p class="text-gray-500">
+                                                Esperando ejecución...
+                                            </p>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ACCIONES -->
+                                    <td class="px-5 py-4">
+
+                                        <div class="flex items-center justify-center gap-2">
+
+                                            <!-- RENOMBRAR -->
+                                            <button
+                                                type="button"
+                                                title="Cambiar nombre"
+                                                aria-label="Cambiar nombre del entrenamiento {{ entrenamiento.id }}"
+                                                data-id="{{ entrenamiento.id }}"
+                                                data-nombre="{{ entrenamiento.nombre }}"
+                                                data-url="{{ url_for('modulo_entrenamiento.cambiar_nombre', id_entrenamiento=entrenamiento.id) }}"
+                                                onclick="renombrarEntrenamiento(this)"
+                                                class="inline-flex items-center justify-center w-9 h-9
+                                                       rounded-lg border border-blue-200
+                                                       text-blue-700 bg-blue-50
+                                                       hover:bg-blue-100 transition">
+
+                                                ✏️
+
+                                            </button>
+
+
+                                            <!-- ELIMINAR -->
+                                            <form
+                                                action="{{ url_for('modulo_entrenamiento.eliminar_entrenamiento', id_entrenamiento=entrenamiento.id) }}"
+                                                method="POST"
+                                                onsubmit="return confirmarEliminacion(this);">
+
+                                                <button
+                                                    type="submit"
+                                                    title="Eliminar entrenamiento"
+                                                    aria-label="Eliminar entrenamiento {{ entrenamiento.id }}"
+                                                    class="inline-flex items-center justify-center w-9 h-9
+                                                           rounded-lg border border-red-200
+                                                           text-red-700 bg-red-50
+                                                           hover:bg-red-100 transition">
+
+                                                    🗑️
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
 
                 </div>
 
 
-                <table class="w-full text-sm">
+                <div class="p-4 bg-gray-50 border-t border-gray-200">
 
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="text-left p-2 pl-4 text-gray-600">
-                                Red
-                            </th>
+                    <p class="text-xs text-gray-500">
+                        Los resultados corresponden a los datos registrados durante cada entrenamiento.
+                        El porcentaje de accuracy representa la exactitud medida sobre el conjunto de prueba.
+                    </p>
 
-                            <th class="text-left p-2 text-gray-600">
-                                BSSID
-                            </th>
+                </div>
 
-                            <th class="text-right p-2 pr-4 text-gray-600">
-                                RSSI
-                            </th>
-                        </tr>
-                    </thead>
+            {% else %}
 
+                <!-- ESTADO VACÍO -->
+                <div class="p-12 text-center">
 
-                    <tbody id="tabla-redes">
+                    <div class="text-5xl mb-4">
+                        🧠
+                    </div>
 
-                        <tr>
+                    <h3 class="text-lg font-semibold text-gray-800">
+                        Todavía no hay entrenamientos
+                    </h3>
 
-                            <td
-                                colspan="2"
-                                class="p-4 text-center text-gray-400">
+                    <p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+                        Utilizá el formulario superior para crear tu primer entrenamiento
+                        y generar un modelo de localización.
+                    </p>
 
-                                Esperando datos del ESP32...
+                </div>
 
-                            </td>
+            {% endif %}
 
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
+        </section>
 
 
-            <!-- ========================= -->
-            <!-- DETENER -->
-            <!-- ========================= -->
+        <!-- PIE -->
+        <footer class="text-center text-xs text-gray-400 mt-8">
+            Proyecto Indoor · Sistema de localización mediante Wi-Fi
+        </footer>
 
-            <form
-                action="/modulo_entrenamiento/pre-entrenamiento"
-                method="GET">
+    </main>
 
-                <button
-                    type="submit"
-                    class="w-full bg-red-600 hover:bg-red-700
-                           text-white font-semibold py-2.5 rounded-lg
-                           transition duration-200">
 
-                    🛑 Detener toma de muestras
+    <!-- FORMULARIO OCULTO PARA RENOMBRAR -->
+    <form
+        id="form-renombrar"
+        method="POST"
+        class="hidden">
 
-                </button>
+        <input
+            type="hidden"
+            name="nuevo_nombre"
+            id="nuevo_nombre">
 
-            </form>
-
-        {% endif %}
-
-    </div>
+    </form>
 
 
     <script>
 
-        const metodoFiltrado = document.getElementById('metodo_filtrado');
-        const configuracionVentana =
-            document.getElementById('configuracion_ventana');
+        function confirmarEliminacion(formulario) {
 
-        metodoFiltrado.addEventListener('change', function () {
+            return confirm(
+                "¿Estás seguro de que querés eliminar este entrenamiento?\n\n" +
+                "Esta acción no se puede deshacer."
+            );
+        }
 
-            if (['Media', 'Mediana'].includes(this.value)) {
-                configuracionVentana.classList.remove('hidden');
-            } else {
-                configuracionVentana.classList.add('hidden');
+
+        function renombrarEntrenamiento(boton) {
+
+            const nombreActual = boton.dataset.nombre;
+            const url = boton.dataset.url;
+
+            const nuevoNombre = prompt(
+                "Ingresá el nuevo nombre del entrenamiento:",
+                nombreActual
+            );
+
+            // Canceló el diálogo.
+            if (nuevoNombre === null) {
+                return;
             }
 
-        });
+            const nombreLimpio = nuevoNombre.trim();
 
-    </script>
+            if (!nombreLimpio) {
+                alert("El nombre no puede estar vacío.");
+                return;
+            }
+
+            if (nombreLimpio.length > 100) {
+                alert("El nombre no puede superar los 100 caracteres.");
+                return;
+            }
+
+            if (nombreLimpio === nombreActual) {
+                return;
+            }
+
+            const formulario = document.getElementById("form-renombrar");
+
+            formulario.action = url;
+
+            document.getElementById("nuevo_nombre").value = nombreLimpio;
+
+            formulario.submit();
+        }
 
 
-    {% if sala_activa %}
+        // Evita enviar varias veces el formulario de entrenamiento.
+        const formularioEntrenamiento = document.querySelector(
+            'form[action="{{ url_for("modulo_entrenamiento.entrenar") }}"]'
+        );
 
-        <script>
+        if (formularioEntrenamiento) {
 
-            function mostrarEntrenamientoFinalizado() {
-                const mensaje = document.getElementById('mensaje-entrenamiento');
-                const boton = document.getElementById('boton-entrenamiento');
-                const tabla = document.getElementById('tabla-redes');
+            formularioEntrenamiento.addEventListener("submit", function () {
 
-                if (mensaje) {
-                    mensaje.textContent = 'La sesión de entrenamiento ha finalizado.';
-                    mensaje.classList.remove('hidden');
-                }
+                const boton = document.getElementById("btn-entrenar");
 
                 if (boton) {
                     boton.disabled = true;
-                    boton.classList.add('opacity-50', 'cursor-not-allowed');
+                    boton.textContent = "⏳ Enviando solicitud...";
+                    boton.classList.add("opacity-60", "cursor-not-allowed");
                 }
-
-                if (tabla) {
-                    tabla.innerHTML = `
-                        <tr>
-                            <td colspan="4" class="px-4 py-6 text-center text-gray-500">
-                                La sesión de entrenamiento ha finalizado.
-                            </td>
-                        </tr>
-                    `;
-                }
-            }
-
-            function traerSenalesDesdeLaAPI() {
-
-                fetch('/modulo_entrenamiento/entrenamiento/redes_vivas')
-
-                    .then(response => response.json())
-
-                    .then(data => {
-
-                        // La sesión de entrenamiento expiró
-                        if (!data.activo) {
-
-                            mostrarEntrenamientoFinalizado();
-
-                            return;
-                        }
-
-
-                        const tabla =
-                            document.getElementById('tabla-redes');
-
-
-                        if (!tabla) {
-                            return;
-                        }
-
-
-                        tabla.innerHTML = '';
-
-
-                        data.muestras.forEach(red => {
-
-                            const colorRssi =
-                                red.rssi_puro > -70
-                                    ? 'text-green-600 font-semibold'
-                                    : 'text-orange-500';
-
-
-                            tabla.innerHTML += `
-                                <tr class="border-t border-gray-200">
-
-                                    <td class="p-2 pl-4 font-mono text-xs text-gray-700">
-                                        ${red.ssid}
-                                    </td>
-
-                                    <td class="p-2 font-mono text-xs text-gray-500">
-                                        ${red.bssid}
-                                    </td>
-
-                                    <td class="p-2 pr-4 text-right ${colorRssi}">
-                                        ${red.rssi_puro} dBm
-                                    </td>
-
-                                </tr>
-                            `;
-                        });
-
-                    })
-
-                    .catch(err => {
-
-                        console.error(
-                            "Error al consultar el estado:",
-                            err
-                        );
-
-                    });
-            }
-
-            // Actualizar cada 3 segundos
-            setInterval(
-                traerSenalesDesdeLaAPI,
-                10000
-            );
-
-            // Primera ejecución
-            traerSenalesDesdeLaAPI();
-            
-            window.addEventListener("beforeunload", function () {
-
-                navigator.sendBeacon(
-                    "/modulo_entrenamiento/entrenamiento/salir"
-                );
 
             });
 
-        </script>
+        }
 
-    {% endif %}
+    </script>
 
 </body>
 </html>

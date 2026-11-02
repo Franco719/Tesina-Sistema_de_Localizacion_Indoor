@@ -4,15 +4,25 @@ from src.core.models.estado_kalman import EstadoKalman
 
 class FiltroKalman(FiltroRSSI):
 
-
-    def __init__(self):
+    def __init__(self, nodo_id: int, sala: str):
+        self.nodo = nodo_id
+        self.sala = sala
         self.filtros = {}
+        self.finalizado = False
 
 
     def filtrar(self, bssid, rssi):
+        self.finalizado = False
 
         if bssid not in self.filtros:
-            self.filtros[bssid] = Kalman1D()
+            estado = EstadoKalman.get_estado(bssid, self.nodo, self.sala)
+            
+            print(f"Nodo: {self.nodo}")
+            print(f"BSSID: {bssid}")
+            print(f"Sala: {self.sala}")
+            print(f"Estado recuperado: {estado}")
+            
+            self.filtros[bssid] = Kalman1D(estado)
 
         return self.filtros[bssid].actualizar(rssi)
 
@@ -35,37 +45,67 @@ class FiltroKalman(FiltroRSSI):
 
     def get_nombre_metodo(self):
         return "Kalman"
+    
+    
+    def finalizar(self):
+        if self.finalizado:
+            return
+
+        for bssid, filtro in self.filtros.items():
+            filtro.guardar(self.nodo, bssid, self.sala)
+
+        self.finalizado = True
 
 
 class Kalman1D:
 
-
     def __init__(self, estado=None):
-        self.estado = estado or EstadoKalman()
+        if estado is None:
+            self.x = None
+            self.p = 1.0
+            self.q = 0.01
+            self.r = 1.0
+        else:
+            self.x = estado.x
+            self.p = estado.p
+            self.q = estado.q
+            self.r = estado.r
 
 
     def actualizar(self, medicion):
 
-        if self.estado.x is None:
-            self.estado.x = medicion
-            return self.estado.x
+        if self.x is None:
+            self.x = medicion
+            return self.x
 
         # Predicción
-        self.estado.p += self.estado.q
+        self.p += self.q
 
         # Ganancia de Kalman
-        k = self.estado.p / (
-            self.estado.p + self.estado.r
+        k = self.p / (
+            self.p + self.r
         )
 
         # Corrección
-        self.estado.x += k * (
-            medicion - self.estado.x
+        self.x += k * (
+            medicion - self.x
         )
 
         # Nueva incertidumbre
-        self.estado.p = (
+        self.p = (
             1 - k
-        ) * self.estado.p
+        ) * self.p
 
-        return self.estado.x
+        return self.x
+    
+    
+    def guardar(self, nodo_id: int, bssid: str, sala: str):
+        EstadoKalman.guardar_estado(
+            nodo_id=nodo_id,
+            bssid=bssid,
+            sala=sala,
+            x=self.x,
+            p=self.p,
+            q=self.q,
+            r=self.r
+        )

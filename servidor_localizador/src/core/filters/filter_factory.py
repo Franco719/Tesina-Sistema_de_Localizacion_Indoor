@@ -4,18 +4,18 @@ from src.core.filters.mediana_filter import FiltroMediana
 from src.core.filters.median_filter import FiltroMedia
 
 
-def crear_filtro(metodo, ventana=None):
+def crear_filtro(metodo, nodo_id: int, sala: str, ventana=None):
 
     match metodo:
         
         case "Kalman":
-            return FiltroKalman()
+            return FiltroKalman(nodo_id, sala)
 
         case "Mediana":
-            return FiltroMediana(ventana)
+            return FiltroMediana(nodo_id, ventana)
 
         case "Media":
-            return FiltroMedia(ventana)
+            return FiltroMedia(nodo_id, ventana)
 
         case "Ninguno":
             return SinFiltro()
@@ -39,3 +39,7 @@ class SinFiltro(FiltroRSSI):
 
     def get_nombre_metodo(self) -> str:
         return "Ninguno"
+    
+    
+    def finalizar(self):
+        pass

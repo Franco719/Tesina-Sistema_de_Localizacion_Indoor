@@ -1,87 +1,93 @@
+from flask import current_app, flash
 from flask import request, jsonify, Blueprint, render_template, redirect, url_for
-from src.core.filters.filter_factory import crear_filtro
-from src.core.database import db as pg_db
 from src.core.database.redis_client import db as redis_db
-from src.core.models.muestra_wifi import MuestraWifi
-from src.web.schemas.modulo_entrenamiento import pre_entrenamiento_schema
+from src.core.filters.filter_manager import filtro_prediccion
+from src.core.inference.gestor_modelos import GestorModelos
+from src.web.services.entrenamiento_red import ServicioEntrenamiento
+from src.core.models.entrenamiento_red import Entrenamiento
+from src.web.schemas.modulo_entrenamiento import pre_entrenamiento_schema, cambio_nombre_schema
 from marshmallow import ValidationError
-from src.core.filters.filter_manager import filtro_manager
 
 
 bp = Blueprint("modulo_entrenamiento", __name__, url_prefix="/modulo_entrenamiento")
 
 
-@bp.route('/pre-entrenamiento', methods=['GET'])
+@bp.route('/entrenamiento', methods=['GET'])
 def vista_entrenamiento():
-    """Obtiene la vista de pre-entrenamiento por defecto para ingresar la sala en la que se realiza el entrenamiento"""
-    filtro_manager.finalizar()
-    redis_db.delete("Sala_Actual")
+    """Obtiene la vista de pre-entrenamiento por defecto para entrenar una red neuronal en base a un metodo de filtrado que se ingrese"""
+    
+    entrenamientos = Entrenamiento.get_entrenamientos()
 
-    return render_template("entrenamiento.html")
+    return render_template("entrenamiento.html", entrenamientos=entrenamientos)
 
-@bp.route('/entrenamiento', methods=['POST'])
-def iniciar_muestreo():
-    """Inicia una sesión de entrenamiento."""
 
+@bp.route('/entrenar', methods=['POST'])
+def entrenar():
     try:
         data_validada = pre_entrenamiento_schema.load(request.form)
     except ValidationError as err:
-        return jsonify({
-            "status": "error",
-            "errors": err.messages
-        }), 422
+        for mensajes in err.messages.values():
+            for mensaje in mensajes:
+                flash(mensaje, "error")
 
-    sala = data_validada["nombre_sala"]
+        return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
+
     metodo = data_validada["metodo_filtrado"]
-    ventana = data_validada.get("ventana")
-    
-    filtro_manager.iniciar(metodo, ventana)
+    nombre = data_validada["nombre_entrenamiento"]
 
-    if sala:
-
-        redis_db.set("Sala_Actual", sala, ex=300)
-        redis_db.set("Metodo_Filtrado", metodo, ex=300)
-
-        if ventana is not None:
-            redis_db.set("Ventana", ventana, ex=300)
-
-        filtro_actual = crear_filtro(
-            metodo,
-            ventana
+    try:
+        ServicioEntrenamiento().iniciar(metodo, nombre)
+    except Exception:
+        current_app.logger.exception(
+            "No se pudo iniciar el entrenamiento."
         )
+        flash("No se pudo iniciar el entrenamiento. Revisá los registros del servidor.", "error")
+        return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
 
-    return render_template(
-        "entrenamiento.html",
-        sala_activa=sala
+    flash("El entrenamiento fue enviado a la cola de ejecución.", "success")
+
+    return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
+
+
+@bp.route('/eliminar_entrenamiento/<id_entrenamiento>', methods=['POST'])
+def eliminar_entrenamiento(id_entrenamiento: int):
+    
+    entrenamiento = Entrenamiento.get_entrenamiento_by_id(id_entrenamiento)
+    
+    if entrenamiento is None:
+        flash("No se encontró el entrenamiento que intentás eliminar.", "error")
+        return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
+
+    Entrenamiento.eliminar_entrenamiento(id_entrenamiento)
+
+    flash("El entrenamiento fue eliminado.", "success")
+
+    return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
+
+
+@bp.route('/cambiar_nombre_entrenamiento/<id_entrenamiento>', methods=['POST'])
+def cambiar_nombre(id_entrenamiento: int):
+    try:
+        data_validada = cambio_nombre_schema.load(request.form)
+    except ValidationError as err:
+        for mensajes in err.messages.values():
+            for mensaje in mensajes:
+                flash(mensaje, "error")
+        
+        return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
+
+    entrenamiento = Entrenamiento.get_entrenamiento_by_id(
+        id_entrenamiento
     )
 
+    if entrenamiento is None:
+        flash("No se encontró el entrenamiento solicitado.", "error")
+        return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))
 
-@bp.route('/entrenamiento/redes_vivas', methods=['GET'])
-def obtener_redes_vivas():
-    """Obtiene las últimas 10 redes guardadas en la Base de Datos para la sala en entrenamiento"""
-    sala_actual = redis_db.get("Sala_Actual")
-    
-    if not sala_actual:
-        print("aaaaaa")
-        return jsonify({
-            "activo": False,
-            "muestras": []
-        })
+    entrenamiento.actualizar_entrenamiento(
+        nombre=data_validada["nuevo_nombre"]
+    )
 
-    ultimas_muestras = MuestraWifi.query.filter_by(sala=sala_actual)\
-                                        .order_by(MuestraWifi.fecha_registro.desc())\
-                                        .limit(10).all()
-                                        
-    lista_json = [{"ssid": m.ssid, "rssi_puro": m.rssi_puro, "bssid": m.bssid} for m in ultimas_muestras]
-    return jsonify({
-        "activo": True,
-        "muestras": lista_json
-    })
+    flash("El nombre del entrenamiento se actualizó correctamente.", "success")
 
-
-@bp.route('/entrenamiento/salir', methods=['POST'])
-def salir_entrenamiento():
-    """Permite detener el entrenamiento ante una salida abrupta de la página"""
-    redis_db.delete("Sala_Actual")
-    filtro_manager.finalizar()
-    return "", 204
+    return redirect(url_for("modulo_entrenamiento.vista_entrenamiento"))

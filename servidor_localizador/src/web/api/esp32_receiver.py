@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint, render_template, redirect, url_for
 from src.core.database.redis_client import guardar_lectura_cruda, db as redis_db
-from src.core.filters.filter_manager import filtro_manager
+from src.core.filters.filter_manager import filtro_muestreo
 from src.core.database import db
 from src.core.models.muestra_wifi import MuestraWifi
 from src.web.schemas.esp32_receiver import wifi_records_schema
@@ -45,7 +45,7 @@ def recibir_datos_esp32():
         # Modo entrenamiento: Recorre la lista validada e iserta en la Base de Datos
         print(f"📥 [ENTRENAMIENTO - {sala}] Guardando ráfaga en Base de Datos Local.")
         
-        filtro = filtro_manager.obtener()
+        filtro = filtro_muestreo.obtener()
         
         for red in data_validada:
 
