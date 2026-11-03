@@ -3,7 +3,7 @@ from flask import request, jsonify, Blueprint, render_template, redirect, url_fo
 from src.core.database.redis_client import db as redis_db
 from src.core.filters.filter_manager import filtro_prediccion
 from src.core.inference.gestor_modelos import GestorModelos
-from src.web.services.entrenamiento_red import ServicioEntrenamiento
+from src.web.services.red_service import RedNeuronalService
 from src.core.models.entrenamiento_red import Entrenamiento
 from src.web.schemas.modulo_entrenamiento import pre_entrenamiento_schema, cambio_nombre_schema
 from marshmallow import ValidationError
@@ -36,7 +36,7 @@ def entrenar():
     nombre = data_validada["nombre_entrenamiento"]
 
     try:
-        ServicioEntrenamiento().iniciar(metodo, nombre)
+        RedNeuronalService().iniciar_entrenamiento(metodo, nombre)
     except Exception:
         current_app.logger.exception(
             "No se pudo iniciar el entrenamiento."

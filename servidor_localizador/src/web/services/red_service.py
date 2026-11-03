@@ -9,10 +9,10 @@ from src.core.filters.filter_manager import filtro_prediccion
 from datetime import datetime
 
 
-class ServicioEntrenamiento:
+class RedNeuronalService:
     gestor = GestorModelos()
 
-    def iniciar(self, metodo_filtrado: str, nombre_entrenamiento: str):
+    def iniciar_entrenamiento(self, metodo_filtrado: str, nombre_entrenamiento: str):
         # Registrar la tarea y enviarla al ejecutor.
         entrenamiento = Entrenamiento.crear_entrenamiento(
             metodo_filtrado = metodo_filtrado,
@@ -24,7 +24,7 @@ class ServicioEntrenamiento:
         return entrenamiento.id
     
     
-    def entrenar(self, id_entrenamiento: int):
+    def entrenar_red(self, id_entrenamiento: int):
         entrenamiento = Entrenamiento.get_entrenamiento_by_id(id_entrenamiento)
         
         if not entrenamiento:
@@ -127,58 +127,85 @@ class ServicioEntrenamiento:
         }
             
     
-    def preparar_entrada(self, escaneo, bssids):
+    def preparar_entrada_prediccion(self, escaneo, bssids):
+
+        redes = {
+            red["bssid"]: red["rssi"]
+            for red in escaneo
+        }
+
         datos = {
-            bssid: escaneo.get(bssid, -100)
+            bssid: redes.get(bssid, -100)
             for bssid in bssids
         }
 
         return pd.DataFrame([datos], columns=bssids)
     
     
-    def predecir_posicion(self, id_entrenamiento, nodo_id: int):
+    def predecir_posicion(self, nodo_id: int):
         # 1. Cargar el artefacto guardado.
-        artefacto = GestorModelos.cargar(id_entrenamiento)
-
-        modelo = artefacto["modelo"]
-        label_encoder = artefacto["label_encoder"]
-        bssids = artefacto["bssids"]
-        metodo_filtrado = artefacto["metodo_filtrado"]
-
-        # 2. Recuperar el último escaneo.
-        registros_redis = redis_client.obtener_lectura_cruda(nodo_id)
-
-        # 3. Preparar la entrada.
-        #filtro = filtro_prediccion.iniciar(metodo_filtrado, nodo_id)
+        gestor = GestorModelos()
+        carga_archivo = gestor.cargar_red(nodo_id)
         
-        muestras = []
-        
-        for red in registros_redis:
-        
-            #rssi_puro = red.get("rssi")
-
-            """rssi_filtrado = filtro.filtrar(
-                red.get("bssid"),
-                rssi_puro
-            )"""
+        if carga_archivo["exito"]:
             
-            muestras.append({
-                "bssid": red.get("bssid"),
-                "rssi": red.get("rssi")
-            })
+            artefacto = carga_archivo["artefacto"]
+
+            modelo = artefacto["modelo"]
+            label_encoder = artefacto["label_encoder"]
+            bssids = artefacto["bssids"]
+            metodo_filtrado = artefacto["metodo_filtrado"]
+
+            # 2. Recuperar el último escaneo.
+            registros_redis = redis_client.obtener_lectura_cruda(nodo_id)
+            redes_redis = registros_redis["redes"]
+            
+            if len(redes_redis) > 0:
+
+                # 3. Preparar la entrada.
+                #filtro = filtro_prediccion.iniciar(metodo_filtrado, nodo_id)
+                
+                muestras = []
+                
+                for red in redes_redis:
+                
+                    #rssi_puro = red.get("rssi")
+
+                    """rssi_filtrado = filtro.filtrar(
+                        red.get("bssid"),
+                        rssi_puro
+                    )"""
+                    
+                    muestras.append({
+                        "bssid": red.get("bssid"),
+                        "rssi": red.get("rssi")
+                    })
+                
+                datos_entrada = self.preparar_entrada_prediccion(muestras, bssids)
+
+                # 4. Ejecutar la predicción.
+                prediccion = modelo.predict(datos_entrada)
+
+                # 5. Convertir la clase numérica en el nombre de la sala.
+                sala = label_encoder.inverse_transform(
+                    prediccion.astype(int)
+                )[0]
+
+                return {
+                    "exito_prediccion": True,
+                    "sala_predicha": sala,
+                    "fecha_escaneo": datetime.fromisoformat(registros_redis["fecha_escaneo"]),
+                    "metodo_filtrado": metodo_filtrado
+                }
+            
+            else:
+                return {
+                    "exito_prediccion": False,
+                    "error": f"No hay registros de comunicacion del nodo con id {nodo_id}"
+                }
         
-        datos_entrada = self.preparar_entrada(muestras, bssids)
-
-        # 4. Ejecutar la predicción.
-        prediccion = modelo.predict(datos_entrada)
-
-        # 5. Convertir la clase numérica en el nombre de la sala.
-        sala = label_encoder.inverse_transform(
-            prediccion.astype(int)
-        )[0]
-
-        return {
-            "sala_predicha": sala,
-            "fecha_escaneo": datetime.now(),
-            "metodo_filtrado": metodo_filtrado
-        }
+        else:
+            return {
+                "exito_prediccion": False,
+                "error": carga_archivo["error"]
+            }

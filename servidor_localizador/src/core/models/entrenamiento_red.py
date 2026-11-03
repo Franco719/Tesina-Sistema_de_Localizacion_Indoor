@@ -30,6 +30,7 @@ class Entrenamiento(db.Model):
     errores = db.Column(db.Text, nullable=True)
     hash_modelo = db.Column(db.String(64), nullable=True) # Como al cargar joblib.load() se ejecuta código, creo un hash para al menos verificar que no haya sido modificado antes de cargarlo
     borrado = db.Column(db.Boolean, nullable=True, default=False)
+    activo = db.Column(db.Boolean, nullable=True, default=False)
     
     
     @classmethod
@@ -48,6 +49,16 @@ class Entrenamiento(db.Model):
     @classmethod
     def get_entrenamientos(cls):
         return cls.query.filter_by(borrado=False).all()
+    
+    @classmethod
+    def get_entrenamiento_activo(cls):
+        entrenamiento = cls.query.filter_by(borrado=False, activo=True).all()
+        
+        if len(entrenamiento) != 1:
+            print(len(entrenamiento))
+            raise ValueError("Más de una red se encuentra activa, verifique el panel de modelos entrenados")
+        
+        return entrenamiento.pop()
     
     @classmethod
     def eliminar_entrenamiento(cls, id: str) -> bool:

@@ -285,7 +285,7 @@ dataset/
 data/
 
 # Modelos entrenados
-models/
+#models/
 *.h5
 *.keras
 *.pth

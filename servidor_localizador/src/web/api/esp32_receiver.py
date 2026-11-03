@@ -34,11 +34,12 @@ def recibir_datos_esp32():
     metodo_filtrado = redis_db.get("Metodo_Filtrado")
     if metodo_filtrado == ("Mediana" or "Media"):
         ventana = redis_db.get("Ventana")
-    nodo_id = "01" # Por ahora hardcodeado, luego si hay más de uno hay que modificar en el esp32 para que mande el id
+    nodo_id = "1" # Por ahora hardcodeado, luego si hay más de uno hay que modificar en el esp32 para que mande el id
     
     if not sala:
         # Modo producción: Solo guarda la lectura instantánea de Redis para localizar sin una nueva lectura
-        guardar_lectura_cruda(nodo_id, data_validada)
+        registro_redis = {"redes": data_validada, "fecha_escaneo": datetime.now().isoformat()}
+        guardar_lectura_cruda(nodo_id, registro_redis)
         print(f"📡 [Nodo {nodo_id}] Guardadas {len(data_validada)} redes validadas en Redis.")
     
     else:

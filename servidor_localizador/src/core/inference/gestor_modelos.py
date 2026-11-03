@@ -50,26 +50,35 @@ class GestorModelos:
         }
     
 
-    def cargar(self, id_entrenamiento):
-        entrenamiento = Entrenamiento.get_entrenamiento_by_id(id_entrenamiento )
+    def cargar_red(self, id_entrenamiento: int = None):
+        
+        if id_entrenamiento:
+            entrenamiento = Entrenamiento.get_entrenamiento_by_id(id_entrenamiento)
+            
+            if entrenamiento is None:
+                return {"exito": False, "error": "No existe el entrenamiento en la base de datos."}
+            
+        else:
+            try:
+                entrenamiento = Entrenamiento.get_entrenamiento_activo()
+            except ValueError as e:
+                return {"exito": False, "error": e}
 
-        if entrenamiento is None:
-            raise ValueError("No existe el entrenamiento en la base de datos.")
 
         if not entrenamiento.path_modelo or not entrenamiento.hash_modelo:
-            raise ValueError("El entrenamiento no tiene un modelo registrado.")
+            return {"exito": False, "error": "El entrenamiento no tiene un modelo registrado."}
 
         ruta = Path(entrenamiento.path_modelo)
 
         if not ruta.is_file():
-            raise FileNotFoundError("No se encontró el archivo del modelo.")
+            return {"exito": False, "error": "No se encontró el archivo del modelo."}
 
         hash_actual = self.calcular_hash(ruta)
 
         if hash_actual != entrenamiento.hash_modelo:
-            raise ValueError("El archivo del modelo fue alterado.")
+            return {"exito": False, "error": "El archivo del modelo fue alterado."}
 
-        return joblib.load(ruta)
+        return {"exito": True, "artefacto": joblib.load(ruta)}
     
     
     def calcular_hash(self, ruta):
